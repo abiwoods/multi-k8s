@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t abibromley/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true abibromley/react-test npm test -- --watchAll=false
+
+after_success:
+  - docker build -t abibromley/multi-client ./client
+  - docker build -t abibromley/multi-nginx ./nginx
+  - docker build -t abibromley/multi-server ./server
+  - docker build -t abibromley/multi-worker ./worker
+  # Take images and push to docker hub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to docker hub
+  - docker push abibromley/multi-client
+  - docker push abibromley/multi-nginx 
+  - docker push abibromley/multi-server
+  - docker push abibromley/multi-worker
